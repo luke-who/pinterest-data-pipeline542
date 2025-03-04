@@ -1,5 +1,0 @@
-RDS_HOST: pinterestdbreadonly.cq2e8zno855e.eu-west-1.rds.amazonaws.com
-RDS_PASSWORD: :t%;yCY3Yjg  # Replace with actual password
-RDS_USER: project_user
-RDS_DATABASE: pinterest_data
-RDS_PORT: 3306
