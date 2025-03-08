@@ -1,2 +1,3 @@
-db_creds.yaml
 mykeypair.pem # put this in ~/.ssh/
+aws_db_creds.yaml 
+local_db_creds.yaml 
