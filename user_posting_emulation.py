@@ -8,16 +8,21 @@ import sqlalchemy
 from sqlalchemy import text
 import yaml  # Import the yaml library
 
-# Load credentials from the YAML file
-with open("db_creds.yaml", "r") as file:
-    db_creds = yaml.safe_load(file)
-
 random.seed(100)
 
 
-class AWSDBConnector:
-    def __init__(self):
+class DBConnector:
+    def __init__(self, creds_file):
+        """
+        Initialize the DBConnector with credentials from a YAML file.
+
+        Args:
+            creds_file (str): Path to the YAML file containing database credentials.
+        """
         # Load credentials from the YAML file
+        with open(creds_file, "r") as file:
+            db_creds = yaml.safe_load(file)
+
         self.HOST = db_creds["RDS_HOST"]
         self.USER = db_creds["RDS_USER"]
         self.PASSWORD = db_creds["RDS_PASSWORD"]
@@ -25,13 +30,19 @@ class AWSDBConnector:
         self.PORT = db_creds["RDS_PORT"]
 
     def create_db_connector(self):
+        """
+        Create a SQLAlchemy engine for connecting to the database.
+
+        Returns:
+            sqlalchemy.engine.Engine: A SQLAlchemy engine object.
+        """
         engine = sqlalchemy.create_engine(
             f"mysql+pymysql://{self.USER}:{self.PASSWORD}@{self.HOST}:{self.PORT}/{self.DATABASE}?charset=utf8mb4"
         )
         return engine
 
 
-new_connector = AWSDBConnector()
+new_connector = DBConnector("local_db_creds.yaml")
 
 
 def run_infinite_post_data_loop():

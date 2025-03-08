@@ -1,0 +1,5 @@
+RDS_HOST: localhost
+RDS_PASSWORD: CXjT3Ea6
+RDS_USER: root
+RDS_DATABASE: pinterest_data_db
+RDS_PORT: 3306

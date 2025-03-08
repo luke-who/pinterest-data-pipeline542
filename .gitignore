@@ -1,2 +1,2 @@
 db_creds.yaml
-68e3427bbc67-key-pair.pem
+mykeypair.pem # put this in ~/.ssh/
