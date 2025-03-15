@@ -6,7 +6,7 @@ from sqlalchemy import text
 import yaml
 from datetime import datetime
 
-random.seed(100)
+random.seed(100)  # Consistent randomness for reproducibility
 
 
 class DBConnector:
@@ -14,7 +14,7 @@ class DBConnector:
         with open(creds_file, "r") as file:
             db_creds = yaml.safe_load(file)
         self.HOST = db_creds["RDS_HOST"]
-        self.USER = db_creds["RDS_USER"]
+        self.USER = db_creds["RDS_USER"] 
         self.PASSWORD = db_creds["RDS_PASSWORD"]
         self.DATABASE = db_creds["RDS_DATABASE"]
         self.PORT = db_creds["RDS_PORT"]
@@ -27,11 +27,9 @@ class DBConnector:
 
 class DataStreamer:
     def __init__(self, db_creds_file, api_creds_file):
-        # Load database credentials
         self.db_connector = DBConnector(db_creds_file)
         self.engine = self.db_connector.create_db_connector()
 
-        # Load API credentials
         with open(api_creds_file, "r") as file:
             api_creds = yaml.safe_load(file)
         self.api_url = api_creds["API_INVOKE_URL"]
@@ -45,33 +43,70 @@ class DataStreamer:
             return obj.isoformat()
         return obj
 
-    def stream_table_data(self, table_name, topic_name, num_records=500):
+    def get_table_row_counts(self, tables):
+        """Get row counts for multiple tables and return as dictionary"""
+        counts = {}
+        try:
+            with self.engine.connect() as connection:
+                for table in tables:
+                    query = text(f"SELECT COUNT(*) FROM {table}")
+                    count = connection.execute(query).scalar()
+                    counts[table] = count
+                    print(f"[STATUS] Table {table} has {count} rows")
+        except Exception as e:
+            print(f"[ERROR] Failed to get table counts: {str(e)}")
+        return counts
+
+    def get_random_indexes(self, table_name, index_column, num_records):
+        """Get random indexes from specified table using correct column name"""
+        try:
+            with self.engine.connect() as connection:
+                # Get total rows for the table
+                count_query = text(f"SELECT COUNT(*) FROM {table_name}")
+                total_rows = connection.execute(count_query).scalar()
+
+                # Ensure we don't request more rows than available
+                actual_limit = min(num_records, total_rows)
+                print(
+                    f"[STATUS] Selecting {actual_limit} indexes (column: {index_column}) from {table_name}"
+                )
+
+                # Use parameterized column name in query
+                query = text(
+                    f"SELECT `{index_column}` FROM {table_name} ORDER BY RAND() LIMIT {actual_limit}"
+                )
+                result = connection.execute(query)
+                return [row[index_column] for row in result]
+        except Exception as e:
+            print(f"[ERROR] Failed to get indexes from {table_name}: {str(e)}")
+            return []
+
+    def stream_data_for_table(self, table_name, topic_name, indexes, index_column):
+        """Stream data for a table using pre-selected indexes and correct column name"""
+        if not indexes:
+            print(f"[WARNING] No indexes provided for {table_name}")
+            return
+
         print(
-            f"[DEBUG] Starting to stream data from table: {table_name} to topic: {topic_name}"
+            f"[STATUS] Starting stream for {table_name} (using {index_column} column) with {len(indexes)} indexes"
         )
 
         try:
             with self.engine.connect() as connection:
-                # Get total rows
-                count_query = text(f"SELECT COUNT(*) FROM {table_name}")
-                total_records = connection.execute(count_query).scalar()
-                print(f"[DEBUG] Total records in {table_name}: {total_records}")
-
-                # Calculate a random offset to fetch 500 records
-                offset = random.randint(0, max(0, total_records - num_records))
+                # Use parameterized column name in WHERE clause
                 query = text(
-                    f"SELECT * FROM {table_name} LIMIT {num_records} OFFSET {offset}"
+                    f"SELECT * FROM {table_name} WHERE `{index_column}` IN :indexes"
                 )
-                result = connection.execute(query)
-                print(f"[DEBUG] Fetching {num_records} records from offset {offset}")
+                params = {"indexes": tuple(indexes)}
+                result = connection.execute(query, params)
+
+                print(f"[STATUS] Retrieved {result.rowcount} records from {table_name}")
 
                 for row_num, row in enumerate(result):
-                    # Convert row to dict and handle datetime serialization
                     record = {
                         str(key): self._serialize_datetime(value)
                         for key, value in row._mapping.items()
                     }
-
                     payload = {"records": [{"value": record}]}
 
                     try:
@@ -80,42 +115,66 @@ class DataStreamer:
                             json=payload,
                             headers=self.headers,
                         )
-                        if response.status_code in [200, 201]:
+                        if response.status_code not in [200, 201]:
                             print(
-                                f"[DEBUG] Successfully sent record {row_num + 1} to {topic_name}"
-                            )
-                        else:
-                            print(
-                                f"[ERROR] Failed to send record {row_num + 1} to {topic_name}: {response.text}"
+                                f"[ERROR] Failed to send record {row_num + 1}: {response.text}"
                             )
                     except Exception as e:
-                        print(f"[ERROR] API Error for {topic_name}: {str(e)}")
+                        print(f"[ERROR] API Error: {str(e)}")
 
-                    sleep(0.01)  # Brief pause between requests
-
+                    sleep(0.01)
         except Exception as e:
             print(f"[ERROR] Database Error for {table_name}: {str(e)}")
         finally:
-            print(f"[DEBUG] Finished streaming data from {table_name} to {topic_name}")
+            print(f"[STATUS] Completed streaming for {table_name}\n")
 
 
 if __name__ == "__main__":
-    # Configuration - Update these values as needed
-    DB_CREDS_FILE = "local_db_creds.yaml"  # or "aws_db_creds.yaml" for production
+    DB_CREDS_FILE = "local_db_creds.yaml"
     API_CREDS_FILE = "api_creds.yaml"
-
-    # Table to Kafka topic mapping based on your sample data
+    TARGET_RECORDS = 500
     TOPIC_MAPPING = {
         "pinterest_data": "808492447622.pin",
         "geolocation_data": "808492447622.geo",
         "user_data": "808492447622.user",
     }
+    # Map each table to its respective index column name
+    INDEX_COLUMNS = {
+        "pinterest_data": "index",
+        "geolocation_data": "ind",
+        "user_data": "ind",
+    }
 
-    # Create a DataStreamer instance
     streamer = DataStreamer(DB_CREDS_FILE, API_CREDS_FILE)
 
-    # Stream data for each table sequentially
+    # Step 1: Get row counts for all tables
+    tables = TOPIC_MAPPING.keys()
+    print("\n[INFO] Getting table row counts...")
+    table_counts = streamer.get_table_row_counts(tables)
+
+    # Step 2: Determine the safe number of records to retrieve
+    min_count = min(table_counts.values())
+    actual_records = min(TARGET_RECORDS, min_count)
+    print("\n[INFO] Safety check results:")
+    print(f"- Smallest table has {min_count} rows")
+    print(f"- Will retrieve {actual_records} records\n")
+
+    # Step 3: Get indexes from the smallest table using its specific column name
+    smallest_table = min(table_counts, key=table_counts.get)
+    index_column = INDEX_COLUMNS[smallest_table]
+    print(
+        f"[INFO] Selecting indexes from smallest table ({smallest_table}) using column '{index_column}'..."
+    )
+    indexes = streamer.get_random_indexes(smallest_table, index_column, actual_records)
+
+    if not indexes:
+        print("[CRITICAL] No indexes retrieved. Exiting.")
+        exit(1)
+
+    # Step 4: Stream data for all tables using common indexes
+    print("\n[INFO] Starting data streaming...")
     for table, topic in TOPIC_MAPPING.items():
-        print(f"[INFO] Starting streamer for table: {table} -> topic: {topic}")
-        streamer.stream_table_data(table, topic)
-        print(f"[INFO] Completed streamer for table: {table} -> topic: {topic}")
+        print(f"\n=== Processing {table} ===")
+        # Get the correct index column for each table
+        current_index_column = INDEX_COLUMNS[table]
+        streamer.stream_data_for_table(table, topic, indexes, current_index_column)
