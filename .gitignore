@@ -2,3 +2,4 @@ mykeypair.pem
 aws_db_creds.yaml 
 local_db_creds.yaml 
 api_creds.yaml
+airflow/*
