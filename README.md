@@ -6,7 +6,27 @@
     </a>
 </p>
 
+---
+[![python](https://img.shields.io/badge/python-3.10.15-blue?style=plastic&logo=python)](https://www.python.org/downloads/release/python-31015/)
 
+## Table of Contents
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Components](#components)
+  - [Core Scripts](#core-scripts)
+  - [Infrastructure](#infrastructure)
+- [Setup and Installation](#setup-and-installation)
+  - [Prerequisites](#prerequisites)
+  - [Configuration Files](#configuration-files-igonred-in-gitignore)
+  - [Setup Steps](#setup-steps)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Batch Processing](#batch-processing)
+  - [Stream Processing](#stream-processing)
+  - [Airflow DAGs](#airflow-dags)
+- [Project Structure](#project-structure)
+- [Security Notes](#security-notes)
+- [License](#license)
 
 ## Overview
 This project implements a sophisticated data pipeline that processes Pinterest-like data through various AWS services, combining both batch and stream processing capabilities. The pipeline demonstrates modern data engineering practices by integrating multiple AWS services and open-source tools to create a robust, scalable data processing solution.
@@ -33,6 +53,12 @@ The pipeline consists of several components working together:
 3. **Orchestration**
    - Apache Airflow (local/MWAA) for workflow management
    - Integration between Airflow and Databricks
+
+Please note there are two architecture diagrams:
+1. Cloud architecture diagram: [Pinterest_Data_Pipeline_cloud.drawio.svg](img/Pinterest_Data_Pipeline_cloud.drawio.svg)
+2. Hybrid setup diagram: [Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg](img/Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg)
+
+Here we deployed the hybrid mthod.
 
 ## Components
 
@@ -67,9 +93,7 @@ The pipeline consists of several components working together:
 
 ### Setup Steps
 1. **Environment Setup**
-   ```bash
-   pip install -r requirements.txt
-   ```
+   - Set Up a Virtual Environment (conda):
 
 2. **Database Configuration**
    - Configure MySQL database using `pinterest_data_db.sql`
@@ -81,6 +105,14 @@ The pipeline consists of several components working together:
    - Configure S3 buckets
    - Set up Kinesis streams
    - Configure MWAA environment
+
+
+## Installation
+
+Clone the Repository:
+```
+git clone https://github.com/luke-who/pinterest-data-pipeline542.git
+```
 
 ## Usage
 
@@ -97,25 +129,32 @@ The pipeline consists of several components working together:
    ```bash
    python user_posting_emulation_streaming.py
    ```
+### **For the rest of the pipeline and development see** `pinterest_data_pipeline.ipynb`
 
 ### Airflow DAGs
 The `airflow/dags` directory contains the workflow definitions for orchestrating the pipeline tasks.
 
 ## Project Structure
 ```
-├── .databricks/
-│   └── commit_outputs
-├── airflow/
-│   ├── dags/
-│   │   └── 808492447622.py
-│   └── requirements.txt
-├── dbc/
-│   └── pinterest_data_pipeline.ipynb
-├── user_posting_emulation.py
-├── user_posting_emulation_streaming.py
-├── pinterest_data_pipeline.ipynb
-├── pinterest_data_db.sql
-└── various configuration files (.yaml)
+├── .databricks/                                        # Databricks integration files
+│   └── commit_outputs                                  # Output logs from Databricks commits
+├── airflow/                                            # Apache Airflow configuration
+│   ├── dags/                                           # Directory for Airflow DAG definitions
+│   │   └── 808492447622.py                             # Main DAG file for workflow orchestration
+│   └── requirements.txt                                # Python dependencies for Airflow
+├── databricks_notebook_output/                         # Exported Databricks notebooks
+│   ├── pinterest_data_pipeline.html                    # HTML version of the notebook
+│   └── pinterest_data_pipeline.ipynb                   # Jupyter notebook version
+├── img/                                                # Project documentation images
+│   ├── Pinterest_Data_Pipeline_cloud.drawio.svg             # Cloud architecture diagram
+│   └── Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg  # Hybrid setup diagram
+├── user_posting_emulation.py                           # Batch processing implementation
+├── user_posting_emulation_streaming.py                 # Streaming processing implementation
+├── pinterest_data_pipeline.ipynb                       # Main development notebook
+├── pinterest_data_db.sql                               # Database initialization script
+├── LICENSE                                             # MIT License file
+├── README.md                                           # Project documentation
+└── .gitignore                                          # Git ignore rules
 ```
 
 ## Security Notes
