@@ -1,6 +1,11 @@
 # Pinterest Data Pipeline
 
-<img src="img/Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg" alt="Pinterest Data Pipeline Architecture" width="100%">
+<p align="center">
+    <a href="assets/esp32-cam.drawio.svg">
+        <img src="img/Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg" alt="Pinterest Data Pipeline Architecture" width="100%">
+    </a>
+</p>
+
 
 
 ## Overview
