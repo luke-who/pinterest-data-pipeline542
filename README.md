@@ -31,7 +31,7 @@ The pipeline consists of several components working together:
      - Direct integration with Databricks
 
 3. **Orchestration**
-   - Apache Airflow (MWAA) for workflow management
+   - Apache Airflow (local/MWAA) for workflow management
    - Integration between Airflow and Databricks
 
 ## Components
@@ -39,7 +39,7 @@ The pipeline consists of several components working together:
 ### Core Scripts
 - `user_posting_emulation.py`: Handles batch processing via Kafka
 - `user_posting_emulation_streaming.py`: Manages real-time data streaming via Kinesis
-- `Pinterest Data Pipeline.ipynb`: Jupyter notebook containing pipeline development and testing
+- `pinterest_data_pipeline.ipynb`: Jupyter notebook containing pipeline development and testing
 
 ### Infrastructure
 - Amazon RDS/Local MySQL for data storage
@@ -47,20 +47,20 @@ The pipeline consists of several components working together:
 - Amazon API Gateway for REST endpoints
 - Amazon S3 for data lake storage
 - Amazon Kinesis for stream processing
-- Amazon MWAA (Managed Workflows for Apache Airflow)
+- Amazon MWAA (Managed Workflows for Apache Airflow)/local Apache Airflow
 - Databricks for data transformation and analysis
 
 ## Setup and Installation
 
 ### Prerequisites
 - AWS Account with appropriate permissions
-- Python 3.x
+- Python 3.10.13
 - MySQL database
 - Apache Kafka
 - Databricks workspace
-- Required Python packages (see `requirements.txt`)
+- Required Python packages (see [`airflow/requirements.txt`](`airflow/requirements.txt`))
 
-### Configuration Files
+### Configuration Files (igonred in .gitignore)
 1. `api_creds.yaml`: API Gateway credentials
 2. `aws_db_creds.yaml`: AWS RDS credentials
 3. `local_db_creds.yaml`: Local database credentials
@@ -107,7 +107,7 @@ The `airflow/dags` directory contains the workflow definitions for orchestrating
 │   └── commit_outputs
 ├── airflow/
 │   ├── dags/
-│   ├── 808492447622.py
+│   │   ├── 808492447622.py
 │   └── requirements.txt
 ├── dbc/
 │   └── pinterest_data_pipeline.ipynb
@@ -121,7 +121,7 @@ The `airflow/dags` directory contains the workflow definitions for orchestrating
 ## Security Notes
 - API keys and credentials should be stored securely
 - Use appropriate IAM roles and permissions
-- Never commit sensitive credentials to version control
+- Never commit sensitive credentials to version control (use `.gitignore`)
 
 ## License
 [Your chosen license]
