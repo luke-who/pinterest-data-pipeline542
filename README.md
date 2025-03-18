@@ -111,7 +111,6 @@ Here we deployed the hybrid mthod.
    - Set up Kinesis streams
    - Configure MWAA environment
 
-
 ## Installation
 
 Clone the Repository:
