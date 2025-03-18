@@ -8,6 +8,11 @@
 
 ---
 [![python](https://img.shields.io/badge/python-3.10.15-blue?style=plastic&logo=python)](https://www.python.org/downloads/release/python-31015/)
+[![MySQL](https://img.shields.io/badge/MySQL-9.2.0-blue?style=plastic&logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-7.7.1-black?style=plastic&logo=apache-kafka)](https://kafka.apache.org/)
+[![Apache Airflow](https://img.shields.io/badge/Apache%20Airflow-2.10.5-green?style=plastic&logo=apache-airflow)](https://airflow.apache.org/)
+[![AWS](https://img.shields.io/badge/AWS-Cloud%20Services-orange?style=plastic&logo=amazon-aws)](https://aws.amazon.com/)
+[![Databricks](https://img.shields.io/badge/Databricks-Platform-red?style=plastic&logo=databricks)](https://databricks.com/)
 
 ## Table of Contents
 - [Overview](#overview)
