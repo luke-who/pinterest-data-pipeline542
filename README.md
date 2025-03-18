@@ -126,5 +126,3 @@ The `airflow/dags` directory contains the workflow definitions for orchestrating
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Contributing
-[Your contribution guidelines]
