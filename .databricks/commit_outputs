@@ -13,4 +13,9 @@
 
 # Uncomment the following pattern to include output for all notebooks
 # **
- 
+
+# Include output only for dbc/pinterest_data_pipeline.ipynb
+dbc/pinterest_data_pipeline.ipynb
+
+# Exclude output for all other notebooks
+!**
