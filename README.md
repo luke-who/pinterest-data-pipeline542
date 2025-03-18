@@ -30,7 +30,7 @@
   - [Stream Processing](#stream-processing)
   - [Airflow DAGs](#airflow-dags)
 - [Project Structure](#project-structure)
-- [Future Improvements](#future-improvements)
+- [Additional Features to Implement](#additional-features-to-implement)
 - [Security Notes](#security-notes)
 - [License](#license)
 
@@ -162,7 +162,7 @@ The `airflow/dags` directory contains the workflow definitions for orchestrating
 └── .gitignore                                          # Git ignore rules
 ```
 
-## Future Improvements
+## Additional Features to Implement
 - **Real-time Data Visualization**:
   - Integrate Power BI for interactive dashboard creation
   - Implement Tableau for advanced data visualization
