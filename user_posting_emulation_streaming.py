@@ -20,45 +20,76 @@ HEADERS = {"Content-Type": "application/json"}
 
 
 class KinesisStreamer:
-    def __init__(self):
+    def __init__(self, batch_mode=False):
+        """
+        Initialize the KinesisStreamer class.
+        :param batch_mode: If True, use 'records' API; otherwise, use 'record' API.
+        """
         self.stream_name = "Kinesis-Prod-Stream"
-        self.invoke_url = f"{API_INVOKE_URL}/streams/{self.stream_name}/record"
+        self.batch_mode = batch_mode
+        self.invoke_url = f"{API_INVOKE_URL}/streams/{self.stream_name}/{'records' if batch_mode else 'record'}"
+        self.max_batch_size = 500  # Maximum batch size for 'records' mode, Kinesis limit per PutRecords call
 
     def send_to_kinesis(self, data, partition_key):
-        """Match the structure from your working test code"""
-        payload = json.dumps(
-            {
-                "StreamName": self.stream_name,
-                "Data": data,  # Direct JSON object (no base64 encoding)
-                "PartitionKey": partition_key,
-            }
-        )
+        """
+        Send a single record to Kinesis (non-batch mode).
+        """
+        payload = {
+            "StreamName": self.stream_name,
+            "Data": json.dumps(data),  # Convert to JSON string
+            "PartitionKey": partition_key,
+        }
 
         try:
-            # Use PUT method instead of POST
             response = requests.put(
                 self.invoke_url,
                 headers=HEADERS,
-                data=payload,  # Use 'data' instead of 'json' parameter
+                json=payload,
             )
 
             if response.status_code == 200:
-                print(
-                    f"Successfully sent record to partition: {partition_key}, response.status_code: {response.status_code}"
-                )
-                print(response.content)
+                print(f"Successfully sent record to partition: {partition_key}")
             else:
                 print(
                     f"Failed to send record: {response.status_code} - {response.text}"
                 )
+        except Exception as e:
+            print(f"API Error: {str(e)}")
 
+    def send_batch_to_kinesis(self, records, partition_key):
+        """
+        Send multiple records in a single batch request to Kinesis (batch mode).
+        """
+        payload = {
+            "records": [
+                {"data": json.dumps(record), "partition-key": partition_key}
+                for record in records
+            ]
+        }
+
+        try:
+            response = requests.put(
+                self.invoke_url,
+                headers=HEADERS,
+                json=payload,
+            )
+
+            if response.status_code == 200:
+                print(f"Successfully sent {len(records)} records to {partition_key}")
+            else:
+                print(f"Failed to send batch: {response.status_code} - {response.text}")
         except Exception as e:
             print(f"API Error: {str(e)}")
 
 
 class DatabaseStreamer:
-    def __init__(self):
-        self.kinesis = KinesisStreamer()
+    def __init__(self, batch_mode=False):
+        """
+        Initialize the DatabaseStreamer class.
+        :param batch_mode: If True, use batch processing for Kinesis.
+        """
+        self.kinesis = KinesisStreamer(batch_mode=batch_mode)
+        self.batch_mode = batch_mode
         self.table_config = {
             "pinterest_data": {"index_col": "index"},
             "geolocation_data": {"index_col": "ind"},
@@ -73,29 +104,20 @@ class DatabaseStreamer:
         return engine.connect()
 
     def _get_common_indexes(self, num_records=500):
-        """Get common random indexes valid for all tables"""
+        """Get common random indexes valid for all tables."""
         with self._get_db_connection() as conn:
-            # Get table counts
-            table_counts = {}
-            for table in self.table_config:
-                count = conn.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar()
-                table_counts[table] = count
-                print(f"{table} has {count} records")
-
-            # Determine safe sample size
+            table_counts = {
+                table: conn.execute(text(f"SELECT COUNT(*) FROM {table}")).scalar()
+                for table in self.table_config
+            }
             min_count = min(table_counts.values())
             sample_size = min(num_records, min_count)
-            print(f"Using common sample size of {sample_size}")
 
-            # Get indexes from smallest table
             smallest_table = min(table_counts, key=table_counts.get)
             index_col = self.table_config[smallest_table]["index_col"]
-
-            # Get random indexes (with backticks)
             result = conn.execute(
                 text(
-                    f"SELECT `{index_col}` FROM {smallest_table} "  # Backticks added
-                    "ORDER BY RAND() LIMIT :limit"
+                    f"SELECT `{index_col}` FROM {smallest_table} ORDER BY RAND() LIMIT :limit"
                 ),
                 {"limit": sample_size},
             )
@@ -103,6 +125,7 @@ class DatabaseStreamer:
             return [row[index_col] for row in result]
 
     def stream_data(self):
+        """Stream data from the database to Kinesis."""
         print("Starting data streaming to Kinesis...")
         common_indexes = self._get_common_indexes()
 
@@ -110,25 +133,32 @@ class DatabaseStreamer:
             for table, config in self.table_config.items():
                 print(f"Streaming from {table}...")
                 index_col = config["index_col"]
-
-                # Fetch records using common indexes
-                query = text(
-                    f"SELECT * FROM {table} WHERE `{index_col}` IN :indexes"
-                )  # Add backticks
+                query = text(f"SELECT * FROM {table} WHERE `{index_col}` IN :indexes")
                 result = conn.execute(query, {"indexes": tuple(common_indexes)})
 
-                # Stream records
+                batch = []
                 for row in result:
                     record = dict(row)
-                    # Convert datetime objects
                     for key, value in record.items():
                         if isinstance(value, datetime):
                             record[key] = value.isoformat()
 
-                    self.kinesis.send_to_kinesis(data=record, partition_key=table)
+                    if self.batch_mode:
+                        batch.append(record)
+                        if len(batch) >= self.kinesis.max_batch_size:
+                            self.kinesis.send_batch_to_kinesis(batch, table)
+                            batch = []
+                            sleep(0.1)
+                    else:
+                        self.kinesis.send_to_kinesis(record, table)
+                        sleep(0.1)
+
+                if self.batch_mode and batch:
+                    self.kinesis.send_batch_to_kinesis(batch, table)
                     sleep(0.1)
 
 
 if __name__ == "__main__":
-    streamer = DatabaseStreamer()
+    batch_mode = True  # Change to False to use single record mode
+    streamer = DatabaseStreamer(batch_mode=batch_mode)
     streamer.stream_data()
