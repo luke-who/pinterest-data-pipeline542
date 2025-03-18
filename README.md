@@ -34,7 +34,7 @@
 - [License](#license)
 
 ## Overview
-This project implements a sophisticated data pipeline that processes Pinterest-like data through various AWS services, combining both batch and stream processing capabilities. The pipeline demonstrates modern data engineering practices by integrating multiple AWS services and open-source tools to create a robust, scalable data processing solution.
+This project implements a sophisticated data pipeline that processes Pinterest-like data through various AWS services. It combines batch processing (Apache Kafka) and stream processing (Amazon Kinesis) capabilities, with Apache Airflow orchestrating the workflow and Databricks handling data transformation. The pipeline demonstrates modern data engineering practices by integrating multiple AWS services and open-source tools to create a robust, scalable data processing solution.
 
 ## Architecture
 The pipeline consists of several components working together:
