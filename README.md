@@ -107,7 +107,7 @@ The `airflow/dags` directory contains the workflow definitions for orchestrating
 │   └── commit_outputs
 ├── airflow/
 │   ├── dags/
-│   │   ├── 808492447622.py
+│   │   └── 808492447622.py
 │   └── requirements.txt
 ├── dbc/
 │   └── pinterest_data_pipeline.ipynb
