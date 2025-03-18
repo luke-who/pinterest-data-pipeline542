@@ -2,6 +2,7 @@
 
 <img src="img/Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg" alt="Pinterest Data Pipeline Architecture" width="100%">
 
+
 ## Overview
 This project implements a sophisticated data pipeline that processes Pinterest-like data through various AWS services, combining both batch and stream processing capabilities. The pipeline demonstrates modern data engineering practices by integrating multiple AWS services and open-source tools to create a robust, scalable data processing solution.
 
