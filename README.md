@@ -95,13 +95,17 @@ The `airflow/dags` directory contains the workflow definitions for orchestrating
 
 ## Project Structure
 ```
+├── .databricks/
+│   └── commit_outputs
 ├── airflow/
 │   ├── dags/
 │   ├── 808492447622.py
 │   └── requirements.txt
+├── dbc/
+│   └── pinterest_data_pipeline.ipynb
 ├── user_posting_emulation.py
 ├── user_posting_emulation_streaming.py
-├── Pinterest Data Pipeline.ipynb
+├── pinterest_data_pipeline.ipynb
 ├── pinterest_data_db.sql
 └── various configuration files (.yaml)
 ```
