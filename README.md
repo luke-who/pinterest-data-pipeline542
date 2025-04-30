@@ -13,6 +13,7 @@
 [![Apache Airflow](https://img.shields.io/badge/Apache%20Airflow-2.10.5-green?style=plastic&logo=apache-airflow)](https://airflow.apache.org/)
 [![AWS](https://img.shields.io/badge/AWS-Cloud%20Services-orange?style=plastic&logo=amazon-aws)](https://aws.amazon.com/)
 [![Databricks](https://img.shields.io/badge/Databricks-Platform-red?style=plastic&logo=databricks)](https://databricks.com/)
+[![LocalStack](https://img.shields.io/badge/LocalStack-0.14.5-blue?style=plastic&logo=localstack)](https://localstack.cloud/)
 
 ## Table of Contents
 - [Overview](#overview)
@@ -28,6 +29,8 @@
 - [Usage](#usage)
   - [Batch Processing](#batch-processing)
   - [Stream Processing](#stream-processing)
+    - [AWS Kinesis](#aws-kinesis)
+    - [LocalStack Kinesis (Local Development)](#localstack-kinesis-local-development)
   - [Airflow DAGs](#airflow-dags)
 - [Project Structure](#project-structure)
 - [Additional Features to Implement](#additional-features-to-implement)
@@ -54,6 +57,7 @@ The pipeline consists of several components working together:
      - Databricks for data transformation
    - **Streaming Path**:
      - Amazon Kinesis for real-time data streaming
+     - LocalStack Kinesis for local development
      - Direct integration with Databricks
 
 3. **Orchestration**
@@ -64,7 +68,7 @@ Please note there are two architecture diagrams:
 1. Cloud architecture diagram: [Pinterest_Data_Pipeline_cloud.drawio.svg](img/Pinterest_Data_Pipeline_cloud.drawio.svg)
 2. Hybrid setup diagram: [Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg](img/Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg)
 
-Here we deployed the hybrid mthod.
+Here we deployed the hybrid method.
 
 ## Components
 
@@ -72,6 +76,9 @@ Here we deployed the hybrid mthod.
 - `user_posting_emulation.py`: Handles batch processing via Kafka
 - `user_posting_emulation_streaming.py`: Manages real-time data streaming via Kinesis
 - `pinterest_data_pipeline.ipynb`: Jupyter notebook containing pipeline development and testing
+- `localstack-kinesis/kinesis-implementation.py`: Implementation for local Kinesis development using LocalStack
+- `localstack-kinesis/kinesis-consumer.py`: Standalone consumer for testing LocalStack Kinesis streams
+- `localstack-kinesis/localstack-setup.sh`: Setup script for LocalStack and Kinesis streams
 
 ### Infrastructure
 - Amazon RDS/Local MySQL for data storage
@@ -79,6 +86,7 @@ Here we deployed the hybrid mthod.
 - Amazon API Gateway for REST endpoints
 - Amazon S3 for data lake storage
 - Amazon Kinesis for stream processing
+- LocalStack for local AWS service emulation
 - Amazon MWAA (Managed Workflows for Apache Airflow)/local Apache Airflow
 - Databricks for data transformation and analysis
 
@@ -90,6 +98,7 @@ Here we deployed the hybrid mthod.
 - MySQL database
 - Apache Kafka
 - Databricks workspace
+- LocalStack (for local development)
 - Required Python packages (see [`airflow/requirements.txt`](`airflow/requirements.txt`))
 
 ### Configuration Files (igonred in .gitignore)
@@ -112,6 +121,10 @@ Here we deployed the hybrid mthod.
    - Set up Kinesis streams
    - Configure MWAA environment
 
+4. **LocalStack Setup (for local development)**
+   - Install and configure LocalStack using `localstack-kinesis/localstack-setup.sh`
+   - Create Kinesis streams for local development
+
 ## Installation
 
 Clone the Repository:
@@ -129,11 +142,32 @@ git clone https://github.com/luke-who/pinterest-data-pipeline542.git
    ```
 
 ### Stream Processing
-1. Ensure Kinesis streams are configured
+
+#### AWS Kinesis
+1. Ensure AWS Kinesis streams are configured
 2. Run the streaming script:
    ```bash
    python user_posting_emulation_streaming.py
    ```
+
+#### LocalStack Kinesis (Local Development)
+1. Set up LocalStack and create Kinesis streams:
+   ```bash
+   cd localstack-kinesis
+   chmod +x localstack-setup.sh
+   ./localstack-setup.sh
+   ```
+
+2. Run the LocalStack Kinesis implementation:
+   ```bash
+   python kinesis-implementation.py
+   ```
+
+3. For testing and monitoring streams, use the standalone consumer in a separate terminal:
+   ```bash
+   python kinesis-consumer.py pin_data_geo  # or pin_data_pin or pin_data_user
+   ```
+
 ### **For the rest of the pipeline and development see** `pinterest_data_pipeline.ipynb`
 
 ### Airflow DAGs
@@ -153,6 +187,10 @@ The `airflow/dags` directory contains the workflow definitions for orchestrating
 ├── img/                                                # Project documentation images
 │   ├── Pinterest_Data_Pipeline_cloud.drawio.svg             # Cloud architecture diagram
 │   └── Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg  # Hybrid setup diagram
+├── localstack-kinesis/                                 # LocalStack implementation for Kinesis
+│   ├── kinesis-consumer.py                             # Standalone consumer for testing
+│   ├── kinesis-implementation.py                       # Main implementation with LocalStack
+│   └── localstack-setup.sh                             # Setup script for LocalStack
 ├── user_posting_emulation.py                           # Batch processing implementation
 ├── user_posting_emulation_streaming.py                 # Streaming processing implementation
 ├── pinterest_data_pipeline.ipynb                       # Main development notebook
@@ -178,7 +216,7 @@ The `airflow/dags` directory contains the workflow definitions for orchestrating
 - API keys and credentials should be stored securely
 - Use appropriate IAM roles and permissions
 - Never commit sensitive credentials to version control (use `.gitignore`)
+- For LocalStack development, use dummy credentials only
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
