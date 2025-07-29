@@ -1,7 +1,7 @@
 # Pinterest Data Pipeline
 
 <p align="center">
-    <a href="assets/esp32-cam.drawio.svg">
+    <a href="img/Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg">
         <img src="img/Pinterest_Data_Pipeline_local_DB_Airflow.drawio.svg" alt="Pinterest Data Pipeline Architecture" width="100%">
     </a>
 </p>
